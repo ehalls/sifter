@@ -14,8 +14,6 @@
     "require": {
         "php": ">=5.3.3",
         "socloz/goutte": "1.*",
-        "symfony/yaml": "2.7.*",
-        "wapmorgan/ncursesobjects": "dev-master"
 
     },
 
