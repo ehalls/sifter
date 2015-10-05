@@ -20,4 +20,8 @@
     "require-dev": {
         "symfony/phpunit-bridge": "~2.7"
     }
+
+    "autoload": {
+        "psr-4": { "ptolemic\\sifter\\": "" }
+    }
 }
