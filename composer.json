@@ -13,7 +13,7 @@
     ],
     "require": {
         "php": ">=5.3.3",
-        "socloz/goutte": "1.*",
+        "socloz/goutte": "1.*"
 
     },
 
