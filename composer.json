@@ -1,0 +1,26 @@
+{
+    "name": "ptolemic/sifter",
+    "description": "Simple goutte automation using config files. dbms i/o to come.",
+    "type": "library",
+    // "homepage": "http://sifterphp.info/",
+    "license": "MIT",
+    "keywords": ["mining", "scraper"],
+    "authors": [
+        {
+            "name": "Edward Halls",
+            "email": "ehalls@gmail.com",
+            "homepage": "https://github.com/ehalls"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "socloz/goutte": "1.*",
+        "symfony/yaml": "2.7.*",
+        "wapmorgan/ncursesobjects": "dev-master"
+
+    },
+
+    "require-dev": {
+        "symfony/phpunit-bridge": "~2.7"
+    }
+}
