@@ -2,7 +2,6 @@
     "name": "ptolemic/sifter",
     "description": "Simple goutte automation using config files. dbms i/o to come.",
     "type": "library",
-    // "homepage": "http://sifterphp.info/",
     "license": "MIT",
     "keywords": ["mining", "scraper"],
     "authors": [
