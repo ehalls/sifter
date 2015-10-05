@@ -26,6 +26,6 @@ trait JsonHelper {
 
     public function encode( $payload )
     {
-        return json_encode($payload);
+        return json_encode($payload, JSON_PRETTY_PRINT);
     }
 } 

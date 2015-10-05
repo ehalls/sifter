@@ -2,7 +2,6 @@
 
 namespace ptolemic\sifter\Core;
 
-use ptolemic\sifter\Core\Adapters\Config\Json as ConfigJson;
 use Goutte\Client;
 
 class Job {
@@ -18,29 +17,29 @@ class Job {
     private function init($sourceDirectory, $format)
     {
         self::$goutte = new Client();
-        $formatClass = 'Config'.$format
-        self::$config[$format] = new  $$formatClass();
+        $formatClass = "ptolemic\\sifter\\Core\\Adapters\\Config\\".$format;
+        self::$config[$format] = new  $formatClass();
 
         $jobList = scandir($sourceDirectory);
         foreach($jobList as  $filename) {
             if( $filename == '.' || $filename == '..') continue;
-            $this->jobs[$filename] = self::$config[$format]->decode(file_get_contents($sourceDirectory.'\\'.$filename));
+            $this->jobs[$filename] = self::$config[$format]->load($sourceDirectory.$filename);
         }
     }
 
-    private function iterateSelectors($format)
+    private function iterateSelectors($task)
     {
-        $store = array('results' => [ ], "total" => 0);
-        foreach( $format['results'] as $payload)
+        $store = array('data' => [ ], "total" => 0);
+        foreach( $task['results'] as $payload)
         {
-            $store['results'] = array_merge($store['results'], $this->iterateSubSelectors($format['container'], $payload));
+            $store['data'] = array_merge($store['data'], $this->iterateSubSelectors($task['container'], $payload));
 
         }
 
         //Hack in the total , just speed. Not a final flexible version
-        if( isset($format['total']) )
+        if( isset($task['total']) )
         {
-            $store['total'] = count($store['results']);
+            $store['total'] = count($store['data']);
         }
 
        return $store;
@@ -50,31 +49,32 @@ class Job {
     {
         $nodes = $this->crawler->filter($container);
         $results = array();
-        foreach($nodes as $product){
+
+        $collect = function ( $node, $i) use ($payload, &$results)  {
+
             $result = new \stdClass();
+
             foreach($payload as $label => $selector)
             {
-
                 if( is_string($selector) ) {
-                    $result->label = $product->filter($selector)->text();
+                    $content = trim(strip_tags($node->filter($selector)->text()));
+                    if($label == "unit_price" ) $content = preg_filter( array("/£/", "/[a-z]/", "/\//"),"", $content);
+                    $result->$label = $content;
+
                 }elseif( is_array($selector) ) {
 
                     switch($selector['type']) {
                         case "link":
-                            $link = $product->selectLink($selector['context']);
+                            $link = $node->filter($selector['context'])->link();
                             $nextPageCrawler = self::$goutte->click($link);
 
                             if($selector['target'] == 'content_size')
                             {
-                                $result->size = self::$goutte->getResponse()->getHeader('Content-Length');
+                                $result->$label = intval(ceil(strlen(self::$goutte->getResponse()->getContent())/1024));
 
-                            }elseif( is_array($selector['target'])
-                                  && $selector['target']['type'] == "position" ) {
-                                $description = $nextPageCrawler
-                                                    ->filter($selector['target']['context'])
-                                                    ->eq($selector['target']['target']);
-
-                                $result->description = str_replace (array("</p>", "<p>"), "", $description);
+                            }else {
+                                $content = $nextPageCrawler->filter($selector['target']);
+                                $result->$label = trim(strip_tags($content->text()));
                             }
                     }
                 }
@@ -82,7 +82,10 @@ class Job {
             }
 
             $results[] = $result;
-        }
+
+        };
+
+        $nodes->each($collect);
 
         return $results;
     }
@@ -90,7 +93,6 @@ class Job {
     public function process()
     {
         foreach( $this->jobs  as $filename => $settings ) {
-            $this->results[$filename] = [ ];
 
             foreach($settings['jobs'] as $job );
             {
@@ -98,7 +100,7 @@ class Job {
 
                 foreach( $job['format'] as $format )
                 {
-                    $this->results[$filename][] =$this->iterateSelectors($format);
+                    $this->results[$filename] = $this->iterateSelectors($format);
                 }
 
             }

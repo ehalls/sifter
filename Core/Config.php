@@ -8,8 +8,6 @@
 
 namespace ptolemic\sifter\Core;
 
-use ptolemic\sifter\Core\Adapters\Config\Json as ConfigJson;
-use ptolemic\sifter\Core\Adapters\Output\Json as OutputJson;
 
 class Config {
 
@@ -30,7 +28,6 @@ class Config {
             && file_exists($fileLocation) ) {
             $this->data = self::$config["json"]->load($fileLocation);
             $this->setDestination( $this->data['output']['location'] );
-            $this->build();
         }else{
             echo "File location invalid.";
         }
@@ -46,25 +43,25 @@ class Config {
 
     private function setAdapter($type, $format)
     {
-        if( empty(self::$$type[$format]) ) {
-            $classname = ucfirst($type.$format);
-            self::$$type[$format] = new $$classname();
+        if( !isset(self::${$type}[$format])
+            || empty(self::${$type}[$format]) ) {
+            $classname = "ptolemic\\sifter\\Core\\Adapters\\".ucfirst($type)."\\".ucfirst($format);
+            self::${$type}[$format] = new $classname();
         }
     }
 
-    private function build()
+    public function build()
     {
-        echo "Running jobs found at: ". $this->data['jobs']['location'];
-        //Run jobs
+        echo "Running jobs found at: ". $this->data['jobs']['location']. "\n";
         $this->work();
 
-        echo "Outputting to: ". $this->data['output']['location'];
+        echo "Outputting to: ". $this->data['output']['location']. "\n";
         $this->dump();
     }
 
-    public function work()
+    private function work()
     {
-        $this->jobModel = new Job($this->data['jobs']['location']);
+        $this->jobModel = new Job($this->data['jobs']);
         $this->jobModel->process();
     }
 
@@ -72,8 +69,15 @@ class Config {
     {
         foreach($this->jobModel->getResults() as $filename => $results)
         {
-            $jsonOutput = $this->output[$this->data['output']['type']]->output($results);
-            file_put_contents($this->destination.'\\'.$filename, $jsonOutput);
+            if($results["total"] == 0)
+            {
+                echo "No results for $filename \n";
+                continue;
+            }
+
+            self::$output[$this->data['output']['type']]
+                            ->output($results['data'], $this->destination.$filename);
+
         }
     }
     public function setDestination($location)

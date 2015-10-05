@@ -10,8 +10,9 @@ class Json implements Adapter {
     use JsonHelper;
 
 
-    public function output( $payload )
+    public function output( $payload, $filename )
     {
-        return $this->encode( $payload )? : "";
+        $jsonOutput = $this->encode( $payload )? : "Parsing error check the payload";
+        file_put_contents($filename, $jsonOutput);
     }
 }

@@ -33,12 +33,11 @@ class Sifter {
     private function init($settings = null)
     {
        if( $settings instanceof Config ) $this->config = $settings;
-       $this->config->init();
     }
 
     private function scrape()
     {
-        return $this->config->work();
+        return $this->config->build();
     }
 
     /**
@@ -48,23 +47,16 @@ class Sifter {
 
     public function execute()
     {
-        echo "Starting...../n";
-
-        // Used this form as it was cleaner for a one line
-        // Typically this form is reserved for embedding in views like HTML.
-        if( $this->scrape() ):
-            return $this->output();
-        endif;
+        echo "Starting.....\n";
+        $this->scrape();
+        $this->output();
     }
 
 
-    // Some basic reporting
-    public function ouput()
+    // Some basic reporting possible and for cleaning up.
+    public function output()
     {
-        echo "Finished...../n";
-        echo "Total Results...../n";
-        echo "Saved to...../n";
-
+        echo "Finished.....\n";
     }
 
     /**
