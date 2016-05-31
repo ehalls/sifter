@@ -21,7 +21,7 @@ trait JsonHelper {
 
     public function decode( $payload )
     {
-        return json_decode($payload, true);
+        return json_decode(file_get_contents($payload), true);
     }
 
     public function encode( $payload )

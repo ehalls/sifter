@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: conjure
- * Date: 04/10/15
- * Time: 20:22
- */
 
 namespace ptolemic\sifter\Core;
 
@@ -19,6 +13,65 @@ class Config {
         $this->init($fileLocation);
     }
 
+    /**
+     *  Set adapater defaults
+     */
+    private function defaults()
+    {
+        //We need at least Json as our base config parser
+        $this->setAdapter("config", "json");
+        $this->setAdapter("output", "json");
+    }
+
+    /**
+     * Set adapter defaults
+     *
+     * @param $type string  Are we setting Config|Output adapter
+     * @param $format string What format of adapter are we using ? eg. Json
+     *
+     */
+    private function setAdapter($type, $format)
+    {
+        if( !isset(self::${$type}[$format])
+            || empty(self::${$type}[$format]) ) {
+            $classname = "ptolemic\\sifter\\Core\\Adapters\\".ucfirst($type)."\\".ucfirst($format);
+            self::${$type}[$format] = new $classname();
+        }
+    }
+
+    /**
+     * Instantiate, initialize, and process scraping jobs
+     */
+    private function work()
+    {
+        $this->jobModel = new Job($this->data['jobs']);
+        $this->jobModel->process();
+    }
+
+    /**
+     * Decorate the output from running Jobs
+     */
+    private function dump()
+    {
+        foreach($this->jobModel->getResults() as $filename => $results)
+        {
+            if($results["total"] == 0)
+            {
+                echo "No results for $filename \n";
+                continue;
+            }
+
+            self::$output[$this->data['output']['type']]
+                ->output($results['data'], $this->destination.$filename);
+
+        }
+    }
+
+    /**
+     * Function handling object initialization after instantiation
+     *
+     * @param $fileLocation string Directory path
+     */
     public function init($fileLocation)
     {
         $this->defaults();
@@ -34,52 +87,11 @@ class Config {
 
     }
 
-    private function defaults()
-    {
-        //We need at least Json as our base config parser
-        $this->setAdapter("config", "json");
-        $this->setAdapter("output", "json");
-    }
-
-    private function setAdapter($type, $format)
-    {
-        if( !isset(self::${$type}[$format])
-            || empty(self::${$type}[$format]) ) {
-            $classname = "ptolemic\\sifter\\Core\\Adapters\\".ucfirst($type)."\\".ucfirst($format);
-            self::${$type}[$format] = new $classname();
-        }
-    }
-
-    public function build()
-    {
-        echo "Running jobs found at: ". $this->data['jobs']['location']. "\n";
-        $this->work();
-
-        echo "Outputting to: ". $this->data['output']['location']. "\n";
-        $this->dump();
-    }
-
-    private function work()
-    {
-        $this->jobModel = new Job($this->data['jobs']);
-        $this->jobModel->process();
-    }
-
-    public function dump()
-    {
-        foreach($this->jobModel->getResults() as $filename => $results)
-        {
-            if($results["total"] == 0)
-            {
-                echo "No results for $filename \n";
-                continue;
-            }
-
-            self::$output[$this->data['output']['type']]
-                            ->output($results['data'], $this->destination.$filename);
-
-        }
-    }
+    /**
+     *  Verifies and stores the relevant configuration path for this instance
+     *
+     * @param $location string Directory path
+     */
     public function setDestination($location)
     {
         if( !empty($location)
@@ -88,5 +100,16 @@ class Config {
         }
     }
 
+    /**
+     *  Run jobs defined in the configuration and format their output
+     */
+    public function build()
+    {
+        echo "Running jobs found at: ". $this->data['jobs']['location']. "\n";
+        $this->work();
+
+        echo "Outputting to: ". $this->data['output']['location']. "\n";
+        $this->dump();
+    }
 
 }

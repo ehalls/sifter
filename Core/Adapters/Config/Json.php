@@ -28,7 +28,7 @@ class Json implements Adapter {
 
     public function load( $payload )
     {
-        $this->data = $this->decode( file_get_contents($payload) );
+        $this->data = $this->decode($payload);
         return $this->data;
     }
 } 
